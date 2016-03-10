@@ -29,9 +29,9 @@ public class CalendarEventProvider {
             CalendarContract.Events.TITLE
     };
 
-    private final ContentResolver contentResolver;
-    private final PermissionChecker permissionChecker;
-    private final CalendarEventAttendeeProvider calendarEventAttendeeProvider;
+    protected final ContentResolver contentResolver;
+    protected final PermissionChecker permissionChecker;
+    protected final CalendarEventAttendeeProvider calendarEventAttendeeProvider;
 
     @Inject
     public CalendarEventProvider(@ForApplication Context context, PermissionChecker permissionChecker,
