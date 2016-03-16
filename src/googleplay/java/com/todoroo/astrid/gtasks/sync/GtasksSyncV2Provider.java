@@ -84,6 +84,7 @@ public class GtasksSyncV2Provider {
     private final GtasksMetadata gtasksMetadataFactory;
     private final SyncExecutor executor;
     private final GtasksInvoker gtasksInvoker;
+    private final GtasksSyncCalenderProvider calenderProvider;
 
     @Inject
     public GtasksSyncV2Provider(TaskService taskService, StoreObjectDao storeObjectDao, GtasksPreferenceService gtasksPreferenceService,
@@ -102,6 +103,7 @@ public class GtasksSyncV2Provider {
         this.gtasksMetadataFactory = gtasksMetadata;
         this.executor = executor;
         this.gtasksInvoker = gtasksInvoker;
+        this.calenderProvider = new GtasksSyncCalenderProvider(context);
     }
 
     private String getName() {
@@ -144,7 +146,7 @@ public class GtasksSyncV2Provider {
                     } catch (IOException e) {
                         handler.handleException(e);
                     }
-
+                    calenderProvider.getTaskList();
                     if (remoteLists == null) {
                         finishSync(callback);
                         return;
@@ -175,6 +177,7 @@ public class GtasksSyncV2Provider {
                     handler.handleException(e);
                     callback.finished();
                 }
+
             }
         });
     }

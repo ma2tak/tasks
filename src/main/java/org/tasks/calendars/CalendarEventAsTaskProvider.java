@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import timber.log.Timber;
 
 import static android.provider.BaseColumns._ID;
@@ -32,11 +34,10 @@ public class CalendarEventAsTaskProvider extends CalendarEventProvider {
             CalendarContract.Events.ORIGINAL_ID,        // 6
     };
 
-
+    @Inject
     public CalendarEventAsTaskProvider(@ForApplication Context context, PermissionChecker permissionChecker) {
         super(context, permissionChecker, null);
     }
-
 
     public List<Task> getEventsAsTaskBetween(long start, long end) {
         return getCalendarEvents(
@@ -46,7 +47,7 @@ public class CalendarEventAsTaskProvider extends CalendarEventProvider {
     }
 
     private String createExtraFields(long id,long original_id) {
-        String fields = String.format("[CALENDAR:%l, %l]", id, original_id);
+        String fields = String.format("[CALENDAR:%d, %d]", id, original_id);
         return fields;
     }
 
@@ -69,14 +70,14 @@ public class CalendarEventAsTaskProvider extends CalendarEventProvider {
                 int originalIdIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.ORIGINAL_ID);
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idIndex);
-                    if (cursor.getString(allDayIndex).equals("true")) {
+//                    if (cursor.getString(allDayIndex).equals("true")) {
                         Task task = new Task();
+                        task.setTitle(cursor.getString(titleIndex));
+                        task.setDueDate(cursor.getLong(startIndex));
                         task.setNotes(cursor.getString(descriptionIndex) +
                                 createExtraFields(cursor.getLong(idIndex), cursor.getLong(originalIdIndex)));
-                        task.setDueDate(cursor.getLong(startIndex));
-                        task.setTitle(cursor.getString(titleIndex));
                         events.add(task);
-                    }
+//                    }
                 }
             }
         } catch (Exception e) {
