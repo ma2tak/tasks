@@ -48,16 +48,6 @@ public class GtasksSyncCalenderProvider {
     private final Context contex;
     private final PermissionChecker permissionChecker;
 
-    public static final String[] INSTANCE_PROJECTION = new String[]{
-            CalendarContract.Instances.EVENT_ID,      // 0
-            CalendarContract.Instances.BEGIN,         // 1
-            CalendarContract.Instances.TITLE          // 2
-    };
-
-    private static final int PROJECTION_ID_INDEX = 0;
-    private static final int PROJECTION_BEGIN_INDEX = 1;
-    private static final int PROJECTION_TITLE_INDEX = 2;
-
     public GtasksSyncCalenderProvider(Context context){
         this.contex = context;
         permissionChecker = new PermissionChecker(context);
@@ -87,22 +77,8 @@ public class GtasksSyncCalenderProvider {
 
 
     public List<TaskList> getTaskList() {
-        provider.getEventsAsTaskBetween(getTodayMills(), getTodayMills() + TimeUnit.DAYS.toMillis(1));
-
-        ArrayList result = new ArrayList<TaskList>();
-
-        return result;
+        long todayMills = getTodayMills();
+        return provider.getCalendarTaskList(todayMills, todayMills + TimeUnit.DAYS.toMillis(1));
     }
 
-
-    private static Task processTask() {
-        return null;
-    }
-
-    private static boolean isVisibleCalendar(String str) {
-        if (str.equals("1")) {
-            return true;
-        }
-        return false;
-    }
 }
