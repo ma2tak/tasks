@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.9'
+    gradleVersion = '2.10'
 }
 
 buildscript {
@@ -10,7 +10,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.android.tools.build:gradle:2.0.0-beta7'
     }
 }
 
@@ -27,8 +27,8 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        versionCode 402
-        versionName "4.8.12"
+        versionCode 404
+        versionName "4.8.14"
         minSdkVersion 14
         targetSdkVersion 23
     }
@@ -51,11 +51,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard.pro'
             signingConfig signingConfigs.release
         }
-        // https://code.google.com/p/android/issues/detail?id=123771
-        debuggable.initWith(buildTypes.debug)
-        debuggable {
-            testCoverageEnabled false
-        }
     }
 
     if (project.hasProperty('keyAlias') &&
@@ -76,16 +71,21 @@ android {
     }
 }
 
+configurations {
+    all*.exclude group: 'com.google.guava', module: 'guava-jdk5'
+    all*.exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+}
+
 dependencies {
-    provided 'com.squareup.dagger:dagger-compiler:1.2.2'
-    compile 'com.squareup.dagger:dagger:1.2.2'
+    provided 'com.google.dagger:dagger-compiler:2.1'
+    compile 'com.google.dagger:dagger:2.1'
 
     compile 'com.nononsenseapps:filepicker:2.5.0'
-    compile 'com.android.support:design:23.1.1'
-    compile 'com.android.support:support-v13:23.1.1'
+    compile 'com.android.support:design:23.2.1'
+    compile 'com.android.support:support-v13:23.2.1'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.jakewharton.timber:timber:4.1.1'
-    compile 'com.google.guava:guava-jdk5:17.0'
+    compile 'com.google.guava:guava:19.0'
     compile ('com.rubiconproject.oss:jchronic:0.2.6') {
         transitive = false
     }
@@ -96,14 +96,12 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-v4'
     }
 
+    googleplayCompile 'com.google.android.apps.dashclock:dashclock-api:2.0.0'
+    googleplayCompile 'com.twofortyfouram:android-plugin-api-for-locale:[1.0.1,2.0['
     googleplayCompile 'com.google.android.gms:play-services-location:8.4.0'
     googleplayCompile 'com.google.android.gms:play-services-analytics:8.4.0'
-    googleplayCompile('com.google.apis:google-api-services-tasks:v1-rev41-1.21.0') {
-        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-    }
-    googleplayCompile('com.google.api-client:google-api-client-android:1.21.0') {
-        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-    }
+    googleplayCompile 'com.google.apis:google-api-services-tasks:v1-rev41-1.21.0'
+    googleplayCompile 'com.google.api-client:google-api-client-android:1.21.0'
 
     androidTestCompile ('org.mockito:mockito-core:1.9.5') {
         transitive = false

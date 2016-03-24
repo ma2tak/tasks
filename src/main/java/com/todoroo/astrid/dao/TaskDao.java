@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.database.sqlite.SQLiteConstraintException;
 
 import com.todoroo.andlib.data.AbstractModel;
+import com.todoroo.andlib.data.Callback;
 import com.todoroo.andlib.data.DatabaseDao;
 import com.todoroo.andlib.data.Property;
 import com.todoroo.andlib.data.TodorooCursor;
@@ -16,6 +17,8 @@ import com.todoroo.andlib.sql.Criterion;
 import com.todoroo.andlib.sql.Functions;
 import com.todoroo.andlib.sql.Query;
 import com.todoroo.andlib.utility.DateUtilities;
+import com.todoroo.astrid.api.Filter;
+import com.todoroo.astrid.api.PermaSql;
 import com.todoroo.astrid.dao.MetadataDao.MetadataCriteria;
 import com.todoroo.astrid.data.RemoteModel;
 import com.todoroo.astrid.data.Task;
@@ -70,12 +73,26 @@ public class TaskDao {
         return dao.query(query);
     }
 
+    public void selectActive(Criterion criterion, Callback<Task> callback) {
+        dao.query(Query.select(Task.PROPERTIES).where(Criterion.and(TaskCriteria.isActive(), criterion)), callback);
+    }
+
     public Task fetch(long id, Property<?>... properties) {
         return dao.fetch(id, properties);
     }
 
+    public int count(Filter filter) {
+        String query = PermaSql.replacePlaceholders(filter.getSqlQuery());
+        return count(Query.select(Task.ID).withQueryTemplate(query));
+    }
+
     public int count(Query query) {
         return dao.count(query);
+    }
+
+    public List<Task> query(Filter filter) {
+        String query = PermaSql.replacePlaceholders(filter.getSqlQuery());
+        return dao.toList(Query.select(Task.PROPERTIES).withQueryTemplate(query));
     }
 
     public TodorooCursor<Task> rawQuery(String selection, String[] selectionArgs, Property.LongProperty id) {

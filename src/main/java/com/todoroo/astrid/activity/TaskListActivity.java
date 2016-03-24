@@ -34,6 +34,7 @@ import com.todoroo.astrid.timers.TimerControlSet;
 import org.tasks.R;
 import org.tasks.fragments.CommentBarFragment;
 import org.tasks.fragments.TaskEditControlSetFragmentManager;
+import org.tasks.injection.ActivityComponent;
 import org.tasks.injection.InjectingAppCompatActivity;
 import org.tasks.intents.TaskIntents;
 import org.tasks.preferences.ActivityPreferences;
@@ -78,6 +79,7 @@ public class TaskListActivity extends InjectingAppCompatActivity implements
     public static final String TOKEN_CREATE_NEW_LIST_NAME = "newListName"; //$NON-NLS-1$
 
     public static final String OPEN_FILTER = "open_filter"; //$NON-NLS-1$
+    public static final String LOAD_FILTER = "load_filter";
     public static final String OPEN_TASK = "open_task"; //$NON-NLS-1$
 
     /**
@@ -125,6 +127,10 @@ public class TaskListActivity extends InjectingAppCompatActivity implements
         if (intent.hasExtra(OPEN_FILTER)) {
             Filter filter = intent.getParcelableExtra(OPEN_FILTER);
             intent.removeExtra(OPEN_FILTER);
+            taskListFragment = newTaskListFragment(filter);
+        } else if (intent.hasExtra(LOAD_FILTER)) {
+            Filter filter = defaultFilterProvider.getFilterFromPreference(intent.getStringExtra(LOAD_FILTER));
+            intent.removeExtra(LOAD_FILTER);
             taskListFragment = newTaskListFragment(filter);
         } else {
             taskListFragment = getTaskListFragment();
@@ -187,6 +193,11 @@ public class TaskListActivity extends InjectingAppCompatActivity implements
         registerReceiver(
                 repeatConfirmationReceiver,
                 new IntentFilter(AstridApiConstants.BROADCAST_EVENT_TASK_REPEATED));
+    }
+
+    @Override
+    public void inject(ActivityComponent component) {
+        component.inject(this);
     }
 
     @Override

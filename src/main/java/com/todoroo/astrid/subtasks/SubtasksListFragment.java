@@ -19,11 +19,13 @@ import com.todoroo.astrid.dao.TaskAttachmentDao;
 import com.todoroo.astrid.dao.TaskListMetadataDao;
 import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.data.TaskListMetadata;
+import com.todoroo.astrid.gtasks.GtasksListFragment;
 import com.todoroo.astrid.service.TaskService;
 
 import org.tasks.R;
 import org.tasks.dialogs.DialogBuilder;
 import org.tasks.injection.ForApplication;
+import org.tasks.injection.FragmentComponent;
 import org.tasks.preferences.ActivityPreferences;
 
 import javax.inject.Inject;
@@ -139,5 +141,14 @@ public class SubtasksListFragment extends TaskListFragment {
     @Override
     protected TaskAdapter createTaskAdapter(TodorooCursor<Task> cursor) {
         return helper.createTaskAdapter(context, cursor, sqlQueryTemplate);
+    }
+
+    @Override
+    public void inject(FragmentComponent component) {
+        if (this instanceof GtasksListFragment) {
+            component.inject((GtasksListFragment) this);
+        } else {
+            component.inject(this);
+        }
     }
 }

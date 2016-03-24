@@ -22,6 +22,7 @@ import com.todoroo.astrid.data.Task;
 import com.todoroo.astrid.gcal.GCalHelper;
 import com.todoroo.astrid.service.TaskService;
 
+import org.tasks.injection.BroadcastComponent;
 import org.tasks.injection.InjectingBroadcastReceiver;
 import org.tasks.time.DateTime;
 
@@ -91,20 +92,19 @@ public class RepeatTaskCompleteListener extends InjectingBroadcastReceiver {
         }
     }
 
+    @Override
+    protected void inject(BroadcastComponent component) {
+        component.inject(this);
+    }
+
     static boolean repeatFinished(long newDueDate, long repeatUntil) {
         return repeatUntil > 0 && newDateTime(newDueDate).startOfDay().isAfter(newDateTime(repeatUntil).startOfDay());
     }
 
     public static void rescheduleTask(GCalHelper gcalHelper, TaskService taskService, Task task, long newDueDate) {
-        long hideUntil = task.getHideUntil();
-        if(hideUntil > 0 && task.getDueDate() > 0) {
-            hideUntil += newDueDate - task.getDueDate();
-        }
-
         task.setReminderSnooze(0L);
         task.setCompletionDate(0L);
-        task.setDueDate(newDueDate);
-        task.setHideUntil(hideUntil);
+        task.setDueDateAdjustingHideUntil(newDueDate);
         task.putTransitory(TaskService.TRANS_REPEAT_COMPLETE, true);
 
         gcalHelper.rescheduleRepeatingTask(task);

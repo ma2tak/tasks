@@ -10,20 +10,15 @@ import com.todoroo.astrid.dao.TaskAttachmentDao;
 import com.todoroo.astrid.dao.TaskDao;
 import com.todoroo.astrid.dao.TaskListMetadataDao;
 import com.todoroo.astrid.dao.UserActivityDao;
-import com.todoroo.astrid.gtasks.GtasksListService;
-import com.todoroo.astrid.gtasks.GtasksMetadataService;
-import com.todoroo.astrid.gtasks.GtasksPreferenceService;
-import com.todoroo.astrid.gtasks.GtasksTaskListUpdater;
-import com.todoroo.astrid.gtasks.sync.GtasksSyncService;
 import com.todoroo.astrid.service.SyncV2Service;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.tags.TagService;
 
 import org.tasks.analytics.Tracker;
 import org.tasks.filters.FilterCounter;
+import org.tasks.injection.ApplicationComponent;
 import org.tasks.injection.InjectingApplication;
 import org.tasks.preferences.Preferences;
-import org.tasks.scheduling.RefreshScheduler;
 import org.tasks.sync.SyncThrottle;
 
 import javax.inject.Inject;
@@ -43,18 +38,13 @@ public class Tasks extends InjectingApplication {
     @Inject TaskListMetadataDao taskListMetadataDao;
     @Inject TaskService taskService;
     @Inject SyncV2Service syncV2Service;
-    @Inject GtasksPreferenceService gtasksPreferenceService;
-    @Inject GtasksListService gtasksListService;
-    @Inject GtasksMetadataService gtasksMetadataService;
-    @Inject GtasksTaskListUpdater gtasksTaskListUpdater;
-    @Inject GtasksSyncService gtasksSyncService;
     @Inject TagService tagService;
     @Inject Broadcaster broadcaster;
     @Inject FilterCounter filterCounter;
-    @Inject RefreshScheduler refreshScheduler;
     @Inject SyncThrottle syncThrottle;
     @Inject Preferences preferences;
     @Inject Tracker tracker;
+    @Inject FlavorSetup flavorSetup;
 
     @Override
     public void onCreate() {
@@ -67,6 +57,8 @@ public class Tasks extends InjectingApplication {
         }
 
         tracker.setTrackingEnabled(preferences.isTrackingEnabled());
+
+        flavorSetup.setup();
     }
 
     private static class ErrorReportingTree extends Timber.Tree {
@@ -89,5 +81,10 @@ public class Tasks extends InjectingApplication {
                 }
             }
         }
+    }
+
+    @Override
+    protected void inject(ApplicationComponent component) {
+        component.inject(this);
     }
 }

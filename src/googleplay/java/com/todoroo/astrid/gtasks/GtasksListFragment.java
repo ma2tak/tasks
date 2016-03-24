@@ -24,7 +24,6 @@ import org.tasks.R;
 import org.tasks.dialogs.DialogBuilder;
 import org.tasks.preferences.ActivityPreferences;
 import org.tasks.sync.IndeterminateProgressBarSyncResultCallback;
-import org.tasks.sync.RecordSyncStatusCallback;
 import org.tasks.sync.SyncThrottle;
 
 import javax.inject.Inject;
