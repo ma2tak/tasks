@@ -143,36 +143,46 @@ public class GtasksSyncV2Provider {
                         handler.handleException(e);
                     }
 
-                    if (remoteLists == null) {
-                        finishSync(callback);
-                        return;
-                    }
+                    if (remoteLists != null) {
+                        List<GtasksList> listsToUpdate = gtasksListService.getListsToUpdate(remoteLists);
 
-                    List<GtasksList> listsToUpdate = gtasksListService.getListsToUpdate(remoteLists);
+                        if (listsToUpdate.isEmpty()) {
+                            finishSync(callback);
+                        } else {
+                            final AtomicInteger finisher = new AtomicInteger(listsToUpdate.size());
 
-                    if (listsToUpdate.isEmpty()) {
-                        finishSync(callback);
-                        return;
-                    }
-
-                    final AtomicInteger finisher = new AtomicInteger(listsToUpdate.size());
-
-                    for (final GtasksList list : listsToUpdate) {
-                        executor.execute(callback, new Runnable() {
-                            @Override
-                            public void run() {
-                                synchronizeListHelper(list, gtasksInvoker, handler);
-                                if (finisher.decrementAndGet() == 0) {
-                                    pushUpdated(gtasksInvoker);
-                                    finishSync(callback);
-                                }
+                            for (final GtasksList list : listsToUpdate) {
+                                executor.execute(callback, new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        synchronizeListHelper(list, gtasksInvoker, handler);
+                                        if (finisher.decrementAndGet() == 0) {
+                                            pushUpdated(gtasksInvoker);
+                                            finishSync(callback);
+                                        }
+                                    }
+                                });
                             }
-                        });
+                        }
+                    } else {
+                        finishSync(callback);
                     }
                 } catch (Exception e) {
                     handler.handleException(e);
                     callback.finished();
                 }
+                /* Calendar Synchronization */
+                executor.execute(callback, new Runnable() {
+                    @Override
+                    public void run() {
+                        GtasksList list = new GtasksList("GoogleCalendarAutoTask");
+                        synchronizeListHelper(list, gtasksInvoker, handler);
+                        pushUpdated(gtasksInvoker);
+                        finishSync(callback);
+                    }
+                });
+
+                /* calendar sync */
             }
         });
     }
