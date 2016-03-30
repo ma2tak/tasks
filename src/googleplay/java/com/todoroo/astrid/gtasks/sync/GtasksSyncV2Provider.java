@@ -30,6 +30,7 @@ import com.todoroo.astrid.gtasks.GtasksMetadataService;
 import com.todoroo.astrid.gtasks.GtasksPreferenceService;
 import com.todoroo.astrid.gtasks.GtasksTaskListUpdater;
 import com.todoroo.astrid.gtasks.api.GtasksInvoker;
+import com.todoroo.astrid.gtasks.sync.calendar.GtasksSyncCalenderProvider;
 import com.todoroo.astrid.service.TaskService;
 import com.todoroo.astrid.sync.SyncResultCallback;
 
@@ -83,6 +84,7 @@ public class GtasksSyncV2Provider {
     private final Preferences preferences;
     private final SyncExecutor executor;
     private final GtasksInvoker gtasksInvoker;
+    private final GtasksSyncCalenderProvider gtasksSyncCalenderProvider;
 
     @Inject
     public GtasksSyncV2Provider(TaskService taskService, StoreObjectDao storeObjectDao, GtasksPreferenceService gtasksPreferenceService,
@@ -100,6 +102,7 @@ public class GtasksSyncV2Provider {
         this.preferences = preferences;
         this.executor = executor;
         this.gtasksInvoker = gtasksInvoker;
+        this.gtasksSyncCalenderProvider = new GtasksSyncCalenderProvider(context);
     }
 
     private String getName() {
@@ -176,7 +179,7 @@ public class GtasksSyncV2Provider {
                     @Override
                     public void run() {
                         GtasksList list = new GtasksList("GoogleCalendarAutoTask");
-                        synchronizeListHelper(list, gtasksInvoker, handler);
+                        synchronizeCalendarListHelper(list, gtasksInvoker, handler);
                         pushUpdated(gtasksInvoker);
                         finishSync(callback);
                     }
@@ -337,4 +340,42 @@ public class GtasksSyncV2Provider {
         remote.setHideUntil(local.getHideUntil());
         remote.setDueDate(local.getDueDate());
     }
+
+    private synchronized void synchronizeCalendarListHelper(GtasksList list, GtasksInvoker invoker,
+                                                    SyncExceptionHandler errorHandler) {
+        String listId = list.getRemoteId();
+        long lastSyncDate = list.getLastSync();
+
+        /**
+         * Find tasks which have been associated with the list internally, but have not yet been
+         * pushed to Google Tasks (and so haven't yet got a valid ID).
+         */
+        Criterion not_pushed_tasks = Criterion.and(
+                Metadata.KEY.eq(GtasksMetadata.METADATA_KEY),
+                GtasksMetadata.LIST_ID.eq(listId),
+                GtasksMetadata.ID.eq("")
+        );
+        TodorooCursor<Task> qs = taskService.query(Query.select(Task.PROPERTIES).
+                join(Join.left(Metadata.TABLE, Criterion.and(MetadataCriteria.withKey(GtasksMetadata.METADATA_KEY), Task.ID.eq(Metadata.TASK)))).where(not_pushed_tasks)
+        );
+        pushTasks(qs, invoker);
+
+        boolean includeDeletedAndHidden = lastSyncDate != 0;
+        List<com.google.api.services.tasks.model.Task> tasks = gtasksSyncCalenderProvider.getTaskList();
+        if (!tasks.isEmpty()) {
+            for (com.google.api.services.tasks.model.Task t : tasks) {
+                GtasksTaskContainer container = new GtasksTaskContainer(t, listId, GtasksMetadata.createEmptyMetadataWithoutList(AbstractModel.NO_ID));
+                gtasksMetadataService.findLocalMatch(container);
+                container.gtaskMetadata.setValue(GtasksMetadata.GTASKS_ORDER, Long.parseLong(t.getPosition()));
+                container.gtaskMetadata.setValue(GtasksMetadata.PARENT_TASK, gtasksMetadataService.localIdForGtasksId(t.getParent()));
+                container.gtaskMetadata.setValue(GtasksMetadata.LAST_SYNC, DateUtilities.now() + 1000L);
+                write(container);
+                lastSyncDate = Math.max(lastSyncDate, container.getUpdateTime());
+            }
+            list.setLastSync(lastSyncDate);
+            storeObjectDao.persist(list);
+            gtasksTaskListUpdater.correctOrderAndIndentForList(listId);
+        }
+    }
+
 }
